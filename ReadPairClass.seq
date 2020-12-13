@@ -1,0 +1,86 @@
+# TO DO
+# how to get reference index? (from header)
+# add in which is primary/make sure order of read1 and read 2 is right
+
+class ReadPair:
+	read1: SAMRecord
+	read2: SAMRecord
+	
+	read1_pos: tuple[int, int]
+	read2_pos: tuple[int, int]
+
+	read1_cigar : CIGAR
+	read2_cigar : CIGAR
+
+	read1_coord : int
+	read2_coord: int
+	
+	# tid (target id) is same as reference index
+	read1_refIndex : int
+	read2_refIndex : int
+	
+	read1_orientation : str
+	read2_orientation : str
+
+	# how to get reference index? (from header)
+	# add in which is primary/make sure order of read1 and read 2 is right
+	
+	primary_is_1: bool
+	duplicate: bool
+	
+	def __init__(self: ReadPair, read1: SAMRecord):
+		self.read1 = read1
+		self.read1_cigar = read1.cigar
+		self.read1_pos = (read1.pos, read1.endpos)
+		self.read1_orientation = "R" if read1.reversed else "F"
+		self.read1_refIndex = read1.tid
+		
+		self.set_read1_coord()
+
+	def set_read2(self, read2):
+		self.read2 = read2
+		self.read2_pos = (read2.pos, read2.endpos)
+		self.read2_cigar = read2.cigar
+		self.read2_orientation = "R" if read2.reversed else "F"
+		self.read2_refIndex = read2.tid
+
+		self.set_read2_coord()
+		
+	def set_read1_coord(self):
+		
+		start_pos = self.read1_pos[0]
+		end_pos = self.read1_pos[1]
+		
+		if self.read1_orientation == "F": 
+			unclipped_num = start_pos
+			if len(self.read1.cigar) > 0:
+				if self.read1_cigar[0][1] == 'S' or self.read1_cigar[0][1] == 'H':
+					unclipped_num = unclipped_num - self.read1_cigar[0][0]
+			self.read1_coord = unclipped_num
+		else: 
+			unclipped_num = end_pos
+			if len(self.read1.cigar) > 0:
+				if self.read1_cigar[len(self.read1_cigar)-1][1] == 'S' or self.read1_cigar[len(self.read1_cigar)-1][1] == 'H':
+					unclipped_num = unclipped_num + self.read1_cigar[len(self.read1_cigar)-1][0]
+			self.read1_coord = unclipped_num
+			
+	def set_read2_coord(self):
+	
+		start_pos = self.read2_pos[0]
+		end_pos = self.read2_pos[1]
+		
+		if not self.read2_orientation == "F":
+			unclipped_num = start_pos
+			if len(self.read2.cigar) > 0:
+				if self.read2_cigar[0][1] == 'S' or self.read2_cigar[0][1] == 'H':
+					unclipped_num = unclipped_num - self.read2_cigar[0][0]
+			self.read2_coord = unclipped_num
+		else: 
+			unclipped_num = end_pos
+			if len(self.read2.cigar) > 0:
+				if self.read2_cigar[len(self.read2_cigar)-1][1] == 'S' or self.read2_cigar[len(self.read2_cigar)-1][1] == 'H':
+					unclipped_num = unclipped_num + self.read2_cigar[len(self.read2_cigar)-1][0]
+			self.read2_coord = unclipped_num
+			
+	def __str__(self: ReadPair):
+		return "read1: " + str(self.read1.name) + " and " + str(self.read2.name)
