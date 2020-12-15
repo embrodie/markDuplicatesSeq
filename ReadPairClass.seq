@@ -1,5 +1,4 @@
 # TO DO
-# how to get reference index? (from header)
 # add in which is primary/make sure order of read1 and read 2 is right
 
 class ReadPair:
