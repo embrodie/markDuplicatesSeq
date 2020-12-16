@@ -20,11 +20,8 @@ class ReadPair:
 	
 	read1_orientation : str
 	read2_orientation : str
-
-	# how to get reference index? (from header)
-	# add in which is primary/make sure order of read1 and read 2 is right
 	
-	primary_is_1: bool
+	primary_is_1: bool # add set method for this
 	duplicate: bool
 	
 	def __init__(self: ReadPair, read1: SAMRecord):
