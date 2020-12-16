@@ -1,8 +1,12 @@
 
+# seqc markDuplicates.seq input_file.bam output_file.bam metrics_file.txt
+
 from ReadPairClass import ReadPair
 
 import sys
 import bio.c_htslib as htslib
+import python
+from time pyimport ctime () -> str	
 	
 def compare_pairs(lhs, rhs):
 	if lhs.read1_coord == rhs.read1_coord and lhs.read2_coord == rhs.read2_coord \
@@ -13,46 +17,28 @@ def compare_pairs(lhs, rhs):
 		return False
 
 
-filename = str(sys.argv[1])
+filename = str(sys.argv[1]).strip(' \t\n\r')
+out_file = str(sys.argv[2]).strip(' \t\n\r')
 
-# print ord(filename[0])
+metrics_filename = "marked_dup_metrics.txt"
+if sys.argv[3]:
+	metrics_filename = str(sys.argv[3]).strip(' \t\n\r')
+	
 
-# bam_file = htslib.hts_open(filename.ptr, "r".ptr)
-# bam_header = htslib.sam_hdr_read(bam_file)
+metrics_file = open(metrics_filename, "w")
+metrics_file.write("# MarkDuplicates INPUT=" + filename + " OUTPUT=" + out_file + " METRICS_FILE=" + metrics_filename + "\n")
+metrics_file.write("# Started On: " + ctime() + "\n")
 
-# header_text = bam_header.text
+dup_reads_file = open("list_dups_"+filename+".txt", "w")
 
-# print bam_header.SortOrder.coordinate
-
-# header = ''
 i = 0
 
-# print import_pysam(filename)
-
-# paired_ends_to_check = list[ReadEnds]()
 unpaired_ends = dict[str, ReadPair]()
 all_paired_ends = list[ReadPair]()
-all_reads = dict[str, SAMRecord]()
-# read_ends = dict[seq, ReadPair]()
-
-all_reads_idx = dict[int, str]()
 
 duplicates = 0
 sup_recs = 0
-
-#open new sam file
-
-# import python
-# pydef import_mod():
-	# # import graphviz
-	# import pysam
-	# # from numpy import arange
-	# # # samfile = pysam.AlignmentFile(filename, "rb")
-	# # return 0
-
-# import_mod()
-
-# from write_bam pyimport print_this () #-> int
+unmapped_recs = 0
 
 # find and match pairs
 for r in BAM(filename):
@@ -60,9 +46,11 @@ for r in BAM(filename):
 	if r.supplementary:
 		sup_recs += 1
 		i = i+1
-		all_reads[r.name] = r
-		all_reads_idx[i] = r.name
 		continue
+	
+	if r.unmapped:
+		unmapped_recs += 1
+		
 	
 	if r.name in unpaired_ends:
 		unpaired_ends[r.name].set_read2(r)
@@ -72,13 +60,8 @@ for r in BAM(filename):
 		
 	else:
 		unpaired_ends[r.name] = ReadPair(r)
-		
-		
-	all_reads[r.name] = r
-	all_reads_idx[i] = r.name
-	i = i+1
 
-print "done with reading"
+	i = i+1
 
 
 # find duplicates in the pairs
@@ -86,16 +69,19 @@ for i, pair1 in enumerate(all_paired_ends):
 	for j, pair2 in enumerate(all_paired_ends):
 		if i != j and (not pair1.duplicate and not pair2.duplicate): 
 			if compare_pairs(pair1, pair2):
-				pair1.duplicate = True
-				pair2.duplicate = True
-			
+				pair1.set_duplicate()
+				pair2.set_duplicate()
+
 				duplicates += 1
+				dup_reads_file.write(pair1.read1.name + "\n" + pair2.read1.name + "\n")
+				
+dup_reads_file.close()
 
 
-# print header
-print len(all_reads_idx)
-print "num sup records: " + str(sup_recs)
-print "number of reads: " + str(i)
-print "number of fragments: " + str(len(unpaired_ends))
-print "number of paired reads: " + str(len(all_paired_ends))
-print "num duplicates: " + str(duplicates)
+metrics_file.write("# METRICS\n")
+metrics_file.write("LIBRARY READ_PAIRS_EXAIMINED SECONDARY_OR_SUPPLEMENTARY_READS UNMAPPED_READS READ_PAIR_DUPLICATES PERCENT_DUPLICATION\n")
+metrics_file.write("Unknown " + str(len(all_paired_ends)) + " " + str(sup_recs) + " " + str(unmapped_recs) + " " + str(duplicates) + " " + str(duplicates/len(all_paired_ends)) + "\n")
+
+metrics_file.close()
+
+print "marking duplicates done"
