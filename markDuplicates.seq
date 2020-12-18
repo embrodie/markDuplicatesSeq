@@ -1,5 +1,8 @@
 
 # seqc markDuplicates.seq input_file.bam output_file.bam metrics_file.txt
+# takes a bam file and finds all the duplicate reads
+# creates a metrics file and a text file listing all the duplicate reads by name
+
 
 from ReadPairClass import ReadPair
 
@@ -36,11 +39,14 @@ i = 0
 unpaired_ends = dict[str, ReadPair]()
 all_paired_ends = list[ReadPair]()
 
+pairs_by_ref = dict[int, list[ReadPair]]()
+
 duplicates = 0
 sup_recs = 0
 unmapped_recs = 0
 
 # find and match pairs
+print "reading in file"
 for r in BAM(filename):
 	
 	if r.supplementary:
@@ -56,6 +62,11 @@ for r in BAM(filename):
 		unpaired_ends[r.name].set_read2(r)
 		all_paired_ends.append(unpaired_ends[r.name])
 		
+		if r.tid not in pairs_by_ref:
+			pairs_by_ref[r.tid] = [unpaired_ends[r.name]]
+		else:
+			pairs_by_ref[r.tid].append(unpaired_ends[r.name])
+		
 		del unpaired_ends[r.name]
 		
 	else:
@@ -63,18 +74,20 @@ for r in BAM(filename):
 
 	i = i+1
 
+print "Read in " + str(i) + " lines"
 
-# find duplicates in the pairs
-for i, pair1 in enumerate(all_paired_ends):
-	for j, pair2 in enumerate(all_paired_ends):
-		if i != j and (not pair1.duplicate and not pair2.duplicate): 
-			if compare_pairs(pair1, pair2):
-				pair1.set_duplicate()
-				pair2.set_duplicate()
+print "finding duplicates"
+for ref in pairs_by_ref:
+	for i, pair1 in enumerate(pairs_by_ref[ref]):
+		for j, pair2 in enumerate(pairs_by_ref[ref]):
+			if i != j and (not pair1.duplicate and not pair2.duplicate): 
+				if compare_pairs(pair1, pair2):
+					pair1.set_duplicate()
+					pair2.set_duplicate()
 
-				duplicates += 1
-				dup_reads_file.write(pair1.read1.name + "\n" + pair2.read1.name + "\n")
-				
+					duplicates += 1
+					dup_reads_file.write(pair1.read1.name + "\n" + pair2.read1.name + "\n")
+
 dup_reads_file.close()
 
 

@@ -1,3 +1,5 @@
+# takes in a bam file and marks the duplicates listed in the list_dups_<filename>.txt
+
 import pysam
 import sys
 import os

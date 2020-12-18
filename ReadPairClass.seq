@@ -1,6 +1,3 @@
-# TO DO
-# add in which is primary/make sure order of read1 and read 2 is right
-
 class ReadPair:
 	read1: SAMRecord
 	read2: SAMRecord
@@ -21,7 +18,7 @@ class ReadPair:
 	read1_orientation : str
 	read2_orientation : str
 	
-	primary_is_1: bool # add set method for this
+	primary_is_1: bool
 	duplicate: bool
 	
 	def __init__(self: ReadPair, read1: SAMRecord):
@@ -77,9 +74,23 @@ class ReadPair:
 				if self.read2_cigar[len(self.read2_cigar)-1][1] == 'S' or self.read2_cigar[len(self.read2_cigar)-1][1] == 'H':
 					unclipped_num = unclipped_num + self.read2_cigar[len(self.read2_cigar)-1][0]
 			self.read2_coord = unclipped_num
-
+			
+			
 	def set_duplicate(self):
 		self.duplicate = True
-			
+		
+	def set_primary(self, other_pair):
+		# mapq_scores = [self.read1.mapq, self.read2.mapq, other_pair.read1.mapq, other_pair.read2.mapq2]
+		max_score = max([self.read1.mapq, self.read2.mapq, other_pair.read1.mapq, other_pair.read2.mapq2])
+		if max_score == self.read1.mapq:
+			self.primary_is_1 = True
+		elif max_score == self.read2.mapq:
+			self.primary_is_1 = False
+		elif max_score == other_pair.read1.mapq:
+			other_pair.primary_is_1 = True
+		else:
+			other_pair.primary_is_1 = False
+
+		
 	def __str__(self: ReadPair):
 		return "read1: " + str(self.read1.name) + " and " + str(self.read2.name)
