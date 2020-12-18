@@ -84,6 +84,8 @@ for ref in pairs_by_ref:
 				if compare_pairs(pair1, pair2):
 					pair1.set_duplicate()
 					pair2.set_duplicate()
+					
+					pair1.set_primary(pair2)
 
 					duplicates += 1
 					dup_reads_file.write(pair1.read1.name + "\n" + pair2.read1.name + "\n")

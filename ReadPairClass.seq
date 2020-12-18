@@ -80,8 +80,7 @@ class ReadPair:
 		self.duplicate = True
 		
 	def set_primary(self, other_pair):
-		# mapq_scores = [self.read1.mapq, self.read2.mapq, other_pair.read1.mapq, other_pair.read2.mapq2]
-		max_score = max([self.read1.mapq, self.read2.mapq, other_pair.read1.mapq, other_pair.read2.mapq2])
+		max_score = max([self.read1.mapq, self.read2.mapq, other_pair.read1.mapq, other_pair.read2.mapq])
 		if max_score == self.read1.mapq:
 			self.primary_is_1 = True
 		elif max_score == self.read2.mapq:
